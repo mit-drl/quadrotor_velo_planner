@@ -43,6 +43,8 @@
 #include <ompl/config.h>
 #include <iostream>
 
+#include "quad_ompl/quad_planner.hpp"
+
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
 
@@ -174,12 +176,6 @@ void planWithSimpleSetup(void)
     }
     else
         std::cout << "No solution found" << std::endl;
-}
-
-nav_msgs::Path create_plan(const nav_msgs::Odometry::ConstPtr& odom,
-        const geometry_msgs::PoseStamped::ConstPtr& pose)
-{
-    // brandons code here
 }
 
 int main(int, char **)
