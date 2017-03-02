@@ -24,7 +24,7 @@ class QuadPlanner
     // your private variables and functions go here
     private:
         ob::ScopedState<ob::SE3StateSpace>
-        convertToScopedState(
+        const convertToScopedState(
             const geometry_msgs::Pose pose);
 
     // your public variables and functions go here
@@ -33,10 +33,22 @@ class QuadPlanner
         ob::RealVectorBounds *bounds;
         ob::SpaceInformationPtr si;
         ob::ProblemDefinitionPtr pdef;
-        ob::PlannerPtr planner;
+        //ob::PlannerPtr planner;
+
+        ros::Subscriber goal_sub;
+        ros::Subscriber start_sub;
+        ros::Publisher path_pub;
+        geometry_msgs::PoseStamped::ConstPtr goal_pose;
+        nav_msgs::Odometry::ConstPtr start_pose;
+
 
         ~QuadPlanner();
         QuadPlanner(ros::NodeHandle *nh);
+        void run();
+        void goal_callback(
+                const geometry_msgs::PoseStamped::ConstPtr& ps);
+        void start_callback(
+                const nav_msgs::Odometry::ConstPtr& odom);
         nav_msgs::Path create_plan(
                 const nav_msgs::Odometry::ConstPtr& odom,
                 const geometry_msgs::PoseStamped::ConstPtr& pose);
