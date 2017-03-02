@@ -1,20 +1,23 @@
 
 #include "quad_ompl/collision_checker.hpp"
 
-CollisionChecker::CollisionChecker()
-{
-}
+using namespace std;
+
+string OCTOMAP_TOPIC = "octomap";
 
 CollisionChecker::~CollisionChecker()
 {
 }
 
-CollisionChecker::CollisionChecker(ros::NodeHandle *nh) : nh(nh)
+CollisionChecker::CollisionChecker(
+        ros::NodeHandle *nh,
+        const ob::SpaceInformationPtr &si) :
+    nh(nh), ob::StateValidityChecker(si)
 {
-    nh->subscribe(OCTOMAP_TOPIC, 0, &CollisionChecker::octomap_cb, this);
+    // nh->subscribe(OCTOMAP_TOPIC, 0, &CollisionChecker::octomap_cb, this);
 }
 
-bool CollisionChecker::is_state_valid(const ob::State *state)
+bool CollisionChecker::isValid(const ob::State *state) const
 {
     return true;
 }

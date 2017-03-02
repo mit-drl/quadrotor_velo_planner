@@ -8,14 +8,14 @@
 
 namespace ob = ompl::base;
 
-class CollisionChecker
+class CollisionChecker : public ob::StateValidityChecker
 {
     public:
-        CollisionChecker();
         ~CollisionChecker();
 
-        CollisionChecker(ros::NodeHandle *nh);
-        bool is_state_valid(const ob::State *state);
+        CollisionChecker(ros::NodeHandle *nh,
+                const ob::SpaceInformationPtr &si);
+        virtual bool isValid(const ob::State *state) const;
         void octomap_cb(octomap_msgs::Octomap::ConstPtr& octomap);
 
     private:
