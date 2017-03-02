@@ -23,5 +23,5 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(quad_ompl_node src/test_ompl.cpp)
-target_link_libraries(quad_ompl_node ${OMPL_LIBRARIES})
+add_executable(test_ompl src/test_ompl.cpp)
+target_link_libraries(test_ompl ${OMPL_LIBRARIES})
