@@ -176,6 +176,12 @@ void planWithSimpleSetup(void)
         std::cout << "No solution found" << std::endl;
 }
 
+nav_msgs::Path create_plan(const nav_msgs::Odometry::ConstPtr& odom,
+        const geometry_msgs::PoseStamped::ConstPtr& pose)
+{
+    // brandons code here
+}
+
 int main(int, char **)
 {
     ros::init(argc, argv, "test_ompl");
