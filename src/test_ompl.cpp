@@ -178,6 +178,11 @@ void planWithSimpleSetup(void)
 
 int main(int, char **)
 {
+    ros::init(argc, argv, "test_ompl");
+    ros::NodeHandle n;
+
+    ros::Rate loop_rate(20);
+
     std::cout << "OMPL version: " << OMPL_VERSION << std::endl;
 
     plan();
