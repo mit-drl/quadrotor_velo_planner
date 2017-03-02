@@ -8,22 +8,24 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   roscpp
   std_msgs
+  octomap_msgs
 )
 
-find_package(OMPL)
+find_package(OMPL REQUIRED)
+find_package(octomap REQUIRED)
 
 catkin_package(
     INCLUDE_DIRS include
-#  LIBRARIES quad_ompl
-#  CATKIN_DEPENDS geometry_msgs nav_msgs roscpp std_msgs
-#  DEPENDS system_lib
+    CATKIN_DEPENDS roscpp
 )
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${OCTOMAP_INCLUDE_DIRS}
   include
 )
 
+link_libraries(${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${OMPL_LIBRARIES})
+
 add_executable(test_ompl src/test_ompl.cpp)
-add_executable(quad_ompl_node src/quad_ompl_node.cpp)
-target_link_libraries(test_ompl ${OMPL_LIBRARIES})
+add_executable(quad_ompl_node src/quad_ompl_node.cpp src/collision_checker.cpp)
