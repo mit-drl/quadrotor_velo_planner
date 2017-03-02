@@ -24,8 +24,8 @@ QuadPlanner::QuadPlanner(ros::NodeHandle *nh)
 
     // set the bounds for the R^3 part of SE(3)
     bounds = new ob::RealVectorBounds(3);
-    bounds->setLow(-10);
-    bounds->setHigh(10);
+    bounds->setLow(-100);
+    bounds->setHigh(100);
 
     space->as<ob::SE3StateSpace>()->setBounds(*bounds);
 
@@ -38,17 +38,17 @@ QuadPlanner::QuadPlanner(ros::NodeHandle *nh)
     std::shared_ptr<CollisionChecker> cc = std::make_shared<CollisionChecker>(nh, si);
 
     // set state validity checking for this space
-    // si->setStateValidityChecker(cc);
+    si->setStateValidityChecker(cc);
 
     // create a problem instance
     pdef = ob::ProblemDefinitionPtr(new ob::ProblemDefinition(si));
 
 
-    std::string goal_topic = "/set_goal";
-    std::string start_topic = "/odom/filtered";
+    std::string goal_topic = "/setpoint_goal";
+    std::string start_topic = "/odometry/filtered";
     std::string path_topic = "/ompl_path";
-    this->goal_sub = nh->subscribe(goal_topic, 0, &QuadPlanner::goal_callback, this);
-    this->start_sub = nh->subscribe(start_topic, 0, &QuadPlanner::start_callback, this);
+    this->goal_sub = nh->subscribe(goal_topic, 1, &QuadPlanner::goal_callback, this);
+    this->start_sub = nh->subscribe(start_topic, 1, &QuadPlanner::start_callback, this);
     this->path_pub = nh->advertise<nav_msgs::Path>(path_topic, 10);
 
     run();
@@ -109,10 +109,10 @@ nav_msgs::Path QuadPlanner::create_plan(
 
 
     // print the settings for this space
-    si->printSettings(std::cout);
+    // si->printSettings(std::cout);
 
     // print the problem settings
-    pdef->print(std::cout);
+    // pdef->print(std::cout);
 
     // attempt to solve the problem within one second of planning time
     ob::PlannerStatus solved = planner->solve(0.1);
@@ -131,20 +131,21 @@ nav_msgs::Path QuadPlanner::create_plan(
         return nav_path;
     }
     else
+    {
     	return nav_path;
         std::cout << "No solution found" << std::endl;
+    }
 }
 
 void QuadPlanner::run(){
-	ros::Rate loop_rate(1);
+	ros::Rate loop_rate(10);
 	while(ros::ok()){
-		nav_msgs::Path path = QuadPlanner::create_plan(start_pose,goal_pose);
+        ros::spinOnce();
+		nav_msgs::Path path = QuadPlanner::create_plan(start_pose, goal_pose);
 
 		this->path_pub.publish(path);
 
 		loop_rate.sleep();
-
-
 	}
 }
 

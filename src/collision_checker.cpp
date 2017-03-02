@@ -34,7 +34,7 @@ bool CollisionChecker::isValid(const ob::State *state) const
 bool CollisionChecker::is_point_valid(double x0, double y0, double z0) const
 {
     double res = tree->getResolution();
-    double clearance = 1.0;
+    double clearance = 0.5;
     int n_voxels = clearance / res + 1;
     double x, y, z;
 
