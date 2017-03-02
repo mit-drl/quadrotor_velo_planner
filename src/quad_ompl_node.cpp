@@ -17,6 +17,10 @@ namespace og = ompl::geometric;
 
 string NODE_NAME = "quad_ompl_node";
 
+bool isStateValid(const ob::State *state) {
+	return true;
+}
+
 QuadPlanner::QuadPlanner(ros::NodeHandle *nh)
 {
 	// construct the state space we are planning in
@@ -34,7 +38,6 @@ QuadPlanner::QuadPlanner(ros::NodeHandle *nh)
 
 	goal_pose = geometry_msgs::PoseStamped::ConstPtr(new geometry_msgs::PoseStamped());
 	start_pose = nav_msgs::Odometry::ConstPtr(new nav_msgs::Odometry());
-
     std::shared_ptr<CollisionChecker> cc = std::make_shared<CollisionChecker>(nh, si);
 
     // set state validity checking for this space
