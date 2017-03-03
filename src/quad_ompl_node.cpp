@@ -100,7 +100,7 @@ nav_msgs::Path QuadPlanner::create_plan(
 	auto goal = convertToScopedState(pose->pose);
 
     // set the start and goal states
-    pdef->setStartAndGoalStates(start, goal);
+    pdef->setStartAndGoalStates(goal, start);
 
     // create a planner for the defined space
     ob::PlannerPtr planner(new og::RRTstar(si));
