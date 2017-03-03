@@ -3,6 +3,7 @@
 #include <ompl/base/SpaceInformation.h>
 #include <ompl/base/spaces/SE3StateSpace.h>
 #include <ompl/geometric/planners/rrt/RRTConnect.h>
+#include <ompl/geometric/planners/rrt/RRTstar.h>
 #include <ompl/geometric/SimpleSetup.h>
 
 #include <ompl/config.h>
@@ -28,8 +29,8 @@ QuadPlanner::QuadPlanner(ros::NodeHandle *nh)
 
     // set the bounds for the R^3 part of SE(3)
     bounds = new ob::RealVectorBounds(3);
-    bounds->setLow(-100);
-    bounds->setHigh(100);
+    bounds->setLow(-10);
+    bounds->setHigh(10);
 
     space->as<ob::SE3StateSpace>()->setBounds(*bounds);
 
@@ -102,7 +103,7 @@ nav_msgs::Path QuadPlanner::create_plan(
     pdef->setStartAndGoalStates(start, goal);
 
     // create a planner for the defined space
-    ob::PlannerPtr planner(new og::RRTConnect(si));
+    ob::PlannerPtr planner(new og::RRTstar(si));
 
     // set the problem we are trying to solve for the planner
     planner->setProblemDefinition(pdef);
@@ -126,11 +127,24 @@ nav_msgs::Path QuadPlanner::create_plan(
     {
         // get the goal representation from the problem definition (not the same as the goal state)
         // and inquire about the found path
-        ob::PathPtr path = pdef->getSolutionPath();
-        std::cout << "Found solution:" << std::endl;
+        ob::PathPtr path_ptr = pdef->getSolutionPath();
+        og::PathGeometric *path = path_ptr->as<og::PathGeometric>();
+        cout << path->length() << endl;
+        nav_path.header.frame_id = "body";
+        for (int i = 0; i < path->getStateCount(); i++)
+        {
+            ob::SE3StateSpace::StateType *state = path->getState(i)
+                ->as<ob::SE3StateSpace::StateType>();
+            geometry_msgs::PoseStamped ps;
+            ps.header.frame_id = "body";
+            ps.pose.position.x = state->getX();
+            ps.pose.position.y = state->getY();
+            ps.pose.position.z = state->getZ();
+            nav_path.poses.push_back(ps);
+        }
 
         // print the path to screen
-        path->print(std::cout);
+        // path->print(std::cout);
         return nav_path;
     }
     else
