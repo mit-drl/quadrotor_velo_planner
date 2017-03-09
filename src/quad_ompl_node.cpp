@@ -29,6 +29,8 @@ QuadPlanner::QuadPlanner(ros::NodeHandle *nh)
 
     // set the bounds for the R^3 part of SE(3)
     bounds = new ob::RealVectorBounds(3);
+
+    // need to make these parameters
     bounds->setLow(-10);
     bounds->setHigh(10);
 
@@ -90,47 +92,26 @@ QuadPlanner::convertToScopedState(const geometry_msgs::Pose pose)
 }
 
 // return a plan from odom to pose
-nav_msgs::Path QuadPlanner::create_plan(
+ob::PlannerStatus QuadPlanner::plan(
         const nav_msgs::Odometry::ConstPtr& odom,
-        const geometry_msgs::PoseStamped::ConstPtr& pose)
+        const geometry_msgs::PoseStamped::ConstPtr& pose,
+        nav_msgs::Path& path_plan)
 {
-	// set start state
     auto start = convertToScopedState(odom->pose.pose);
-    // set goal state
 	auto goal = convertToScopedState(pose->pose);
-
-    // set the start and goal states
-    pdef->setStartAndGoalStates(goal, start);
-
-    // create a planner for the defined space
+    pdef->setStartAndGoalStates(start, goal);
     ob::PlannerPtr planner(new og::RRTstar(si));
-
-    // set the problem we are trying to solve for the planner
     planner->setProblemDefinition(pdef);
-
-    // perform setup steps for the planner
     planner->setup();
 
-
-    // print the settings for this space
-    // si->printSettings(std::cout);
-
-    // print the problem settings
-    // pdef->print(std::cout);
-
-    // attempt to solve the problem within one second of planning time
+    // make timeout a parameters
     ob::PlannerStatus solved = planner->solve(0.1);
-
-    nav_msgs::Path nav_path;
 
 	if (solved)
     {
-        // get the goal representation from the problem definition (not the same as the goal state)
-        // and inquire about the found path
         ob::PathPtr path_ptr = pdef->getSolutionPath();
         og::PathGeometric *path = path_ptr->as<og::PathGeometric>();
-        cout << path->length() << endl;
-        nav_path.header.frame_id = "body";
+        path_plan.header.frame_id = "body";
         for (int i = 0; i < path->getStateCount(); i++)
         {
             ob::SE3StateSpace::StateType *state = path->getState(i)
@@ -140,27 +121,27 @@ nav_msgs::Path QuadPlanner::create_plan(
             ps.pose.position.x = state->getX();
             ps.pose.position.y = state->getY();
             ps.pose.position.z = state->getZ();
-            nav_path.poses.push_back(ps);
+            path_plan.poses.push_back(ps);
         }
+    }
 
-        // print the path to screen
-        // path->print(std::cout);
-        return nav_path;
-    }
-    else
-    {
-    	return nav_path;
-        std::cout << "No solution found" << std::endl;
-    }
+    return solved;
 }
 
 void QuadPlanner::run(){
+    // make rate a parameter
 	ros::Rate loop_rate(10);
 	while(ros::ok()){
         ros::spinOnce();
-		nav_msgs::Path path = QuadPlanner::create_plan(start_pose, goal_pose);
 
-		this->path_pub.publish(path);
+        nav_msgs::Path path;
+        ob::PlannerStatus status = QuadPlanner::plan(
+                start_pose, goal_pose, path);
+
+        if (status)
+        {
+            this->path_pub.publish(path);
+        }
 
 		loop_rate.sleep();
 	}

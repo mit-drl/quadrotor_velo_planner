@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>quad_ompl</name>
+  <name>quadrotor_velo_planner</name>
   <version>0.0.0</version>
   <description>The quad_ompl package</description>
 

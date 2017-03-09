@@ -49,9 +49,10 @@ class QuadPlanner
                 const geometry_msgs::PoseStamped::ConstPtr& ps);
         void start_callback(
                 const nav_msgs::Odometry::ConstPtr& odom);
-        nav_msgs::Path create_plan(
+        ob::PlannerStatus plan(
                 const nav_msgs::Odometry::ConstPtr& odom,
-                const geometry_msgs::PoseStamped::ConstPtr& pose);
+                const geometry_msgs::PoseStamped::ConstPtr& pose,
+                nav_msgs::Path& path_plan);
 };
 
 #endif

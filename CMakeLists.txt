@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(quad_ompl)
+project(quadrotor_velo_planner)
 
 add_definitions(-std=c++11)
 
@@ -11,7 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   octomap_msgs
 )
 
-find_package(OMPL REQUIRED)
+# find_package(OMPL REQUIRED)
 find_package(octomap REQUIRED)
 
 catkin_package(
@@ -25,7 +25,9 @@ include_directories(
   include
 )
 
-link_libraries(${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${OMPL_LIBRARIES})
+link_directories(/usr/local/lib)
+
+link_libraries(${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ompl)
 
 add_executable(test_ompl src/test_ompl.cpp)
 add_executable(quad_ompl_node src/quad_ompl_node.cpp src/collision_checker.cpp)
