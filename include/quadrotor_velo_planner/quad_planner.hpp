@@ -15,43 +15,42 @@
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Quaternion.h>
+#include <ros/ros.h>
 
+using namespace std;
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
+typedef nav_msgs::Odometry::ConstPtr OdomPtr;
+typedef geometry_msgs::PoseStamped::ConstPtr PoseStampedPtr;
 
 class QuadPlanner
 {
-    // your private variables and functions go here
     private:
-        ob::ScopedState<ob::SE3StateSpace>
-        const convertToScopedState(
-            const geometry_msgs::Pose pose);
+        ob::ScopedState<ob::SE3StateSpace> convertToScopedState(
+            const geometry_msgs::Pose& pose);
+        ros::NodeHandle *nh;
 
-    // your public variables and functions go here
     public:
         ob::StateSpacePtr space;
         ob::RealVectorBounds *bounds;
         ob::SpaceInformationPtr si;
         ob::ProblemDefinitionPtr pdef;
-        //ob::PlannerPtr planner;
 
         ros::Subscriber goal_sub;
-        ros::Subscriber start_sub;
+        ros::Subscriber odom_sub;
         ros::Publisher path_pub;
-        geometry_msgs::PoseStamped::ConstPtr goal_pose;
-        nav_msgs::Odometry::ConstPtr start_pose;
+        PoseStampedPtr goal_pose;
+        OdomPtr start_pose;
 
 
         ~QuadPlanner();
         QuadPlanner(ros::NodeHandle *nh);
-        void run();
-        void goal_callback(
-                const geometry_msgs::PoseStamped::ConstPtr& ps);
-        void start_callback(
-                const nav_msgs::Odometry::ConstPtr& odom);
+        void start();
+        void goal_cb(const PoseStampedPtr& ps);
+        void odom_cb(const OdomPtr& odom);
         ob::PlannerStatus plan(
-                const nav_msgs::Odometry::ConstPtr& odom,
-                const geometry_msgs::PoseStamped::ConstPtr& pose,
+                const OdomPtr& odom,
+                const PoseStampedPtr& pose,
                 nav_msgs::Path& path_plan);
 };
 

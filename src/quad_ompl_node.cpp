@@ -1,64 +1,35 @@
-#include "ros/ros.h"
 
+#include "ros/ros.h"
 #include <ompl/base/SpaceInformation.h>
 #include <ompl/base/spaces/SE3StateSpace.h>
 #include <ompl/geometric/planners/rrt/RRTConnect.h>
 #include <ompl/geometric/planners/rrt/RRTstar.h>
 #include <ompl/geometric/SimpleSetup.h>
-
 #include <ompl/config.h>
 #include <iostream>
-
-#include "quad_ompl/collision_checker.hpp"
-#include "quad_ompl/quad_planner.hpp"
-
-using namespace std;
-namespace ob = ompl::base;
-namespace og = ompl::geometric;
+#include "quadrotor_velo_planner/collision_checker.hpp"
+#include "quadrotor_velo_planner/quad_planner.hpp"
 
 string NODE_NAME = "quad_ompl_node";
+string ODOM_TOPIC = "/odometry/filtered";
+string GOAL_TOPIC = "/setpoint_goal";
+string PATH_TOPIC = "/ompl_path";
 
-bool isStateValid(const ob::State *state) {
-	return true;
-}
-
-QuadPlanner::QuadPlanner(ros::NodeHandle *nh)
+QuadPlanner::QuadPlanner(ros::NodeHandle *nh) :
+    nh(nh),
+    space(ob::StateSpacePtr(new ob::SE3StateSpace())),
+    bounds(new ob::RealVectorBounds(3)),
+    si(ob::SpaceInformationPtr(new ob::SpaceInformation(space))),
+    goal_pose(PoseStampedPtr(new geometry_msgs::PoseStamped())),
+    start_pose(OdomPtr(new nav_msgs::Odometry()))
 {
-	// construct the state space we are planning in
-	space = ob::StateSpacePtr(new ob::SE3StateSpace());
-
-    // set the bounds for the R^3 part of SE(3)
-    bounds = new ob::RealVectorBounds(3);
-
     // need to make these parameters
     bounds->setLow(-10);
     bounds->setHigh(10);
-
     space->as<ob::SE3StateSpace>()->setBounds(*bounds);
-
-    // construct an instance of  space information from this state space
-    si = ob::SpaceInformationPtr(new ob::SpaceInformation(space));
-
-	goal_pose = geometry_msgs::PoseStamped::ConstPtr(new geometry_msgs::PoseStamped());
-	start_pose = nav_msgs::Odometry::ConstPtr(new nav_msgs::Odometry());
-    std::shared_ptr<CollisionChecker> cc = std::make_shared<CollisionChecker>(nh, si);
-
-    // set state validity checking for this space
+    shared_ptr<CollisionChecker> cc = make_shared<CollisionChecker>(nh, si);
     si->setStateValidityChecker(cc);
-
-    // create a problem instance
     pdef = ob::ProblemDefinitionPtr(new ob::ProblemDefinition(si));
-
-
-    std::string goal_topic = "/setpoint_goal";
-    std::string start_topic = "/odometry/filtered";
-    std::string path_topic = "/ompl_path";
-    this->goal_sub = nh->subscribe(goal_topic, 1, &QuadPlanner::goal_callback, this);
-    this->start_sub = nh->subscribe(start_topic, 1, &QuadPlanner::start_callback, this);
-    this->path_pub = nh->advertise<nav_msgs::Path>(path_topic, 10);
-
-    run();
-
 }
 
 QuadPlanner::~QuadPlanner()
@@ -66,16 +37,18 @@ QuadPlanner::~QuadPlanner()
 	delete bounds;
 }
 
-void QuadPlanner::goal_callback(const geometry_msgs::PoseStamped::ConstPtr& ps) {
+void QuadPlanner::goal_cb(const PoseStampedPtr& ps)
+{
 	goal_pose = ps;
 }
 
-void QuadPlanner::start_callback(const nav_msgs::Odometry::ConstPtr& odom) {
+void QuadPlanner::odom_cb(const OdomPtr& odom)
+{
 	start_pose = odom;
 }
 
-const ob::ScopedState<ob::SE3StateSpace>
-QuadPlanner::convertToScopedState(const geometry_msgs::Pose pose)
+ob::ScopedState<ob::SE3StateSpace>
+QuadPlanner::convertToScopedState(const geometry_msgs::Pose& pose)
 {
 	geometry_msgs::Point point = pose.position;
 	geometry_msgs::Quaternion quat = pose.orientation;
@@ -93,8 +66,8 @@ QuadPlanner::convertToScopedState(const geometry_msgs::Pose pose)
 
 // return a plan from odom to pose
 ob::PlannerStatus QuadPlanner::plan(
-        const nav_msgs::Odometry::ConstPtr& odom,
-        const geometry_msgs::PoseStamped::ConstPtr& pose,
+        const OdomPtr& odom,
+        const PoseStampedPtr& pose,
         nav_msgs::Path& path_plan)
 {
     auto start = convertToScopedState(odom->pose.pose);
@@ -112,6 +85,7 @@ ob::PlannerStatus QuadPlanner::plan(
         ob::PathPtr path_ptr = pdef->getSolutionPath();
         og::PathGeometric *path = path_ptr->as<og::PathGeometric>();
         path_plan.header.frame_id = "body";
+
         for (int i = 0; i < path->getStateCount(); i++)
         {
             ob::SE3StateSpace::StateType *state = path->getState(i)
@@ -128,10 +102,16 @@ ob::PlannerStatus QuadPlanner::plan(
     return solved;
 }
 
-void QuadPlanner::run(){
+void QuadPlanner::start()
+{
+    goal_sub = nh->subscribe(GOAL_TOPIC, 1, &QuadPlanner::goal_cb, this);
+    odom_sub = nh->subscribe(ODOM_TOPIC, 1, &QuadPlanner::odom_cb, this);
+    path_pub = nh->advertise<nav_msgs::Path>(PATH_TOPIC, 10);
+
     // make rate a parameter
 	ros::Rate loop_rate(10);
-	while(ros::ok()){
+	while(ros::ok())
+	{
         ros::spinOnce();
 
         nav_msgs::Path path;
@@ -153,7 +133,7 @@ int main(int argc, char **argv)
     ros::NodeHandle *nh = new ros::NodeHandle;
 
     QuadPlanner qp(nh);
-
+    qp.start();
     ros::spin();
     return 0;
 }
