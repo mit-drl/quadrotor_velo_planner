@@ -19,6 +19,7 @@ class CollisionChecker : public ob::StateValidityChecker
                 const ob::SpaceInformationPtr &si);
         virtual bool isValid(const ob::State *state) const;
         void cloud_cb(const PointCloud2Ptr cloud);
+        void set_tags(vector<tf::StampedTransform>);
 
     private:
         ros::NodeHandle *nh;
@@ -26,7 +27,7 @@ class CollisionChecker : public ob::StateValidityChecker
         PointCloud2Ptr cloud;
         Clustering clustering;
         vector<PCLPointCloudPtr> clusters;
-        bool is_point_valid(double x0, double y0, double z0) const;
+        vector<tf::StampedTransform> tags;
 };
 
 #endif

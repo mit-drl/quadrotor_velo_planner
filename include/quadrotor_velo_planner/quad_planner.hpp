@@ -35,21 +35,24 @@ class QuadPlanner
         ob::RealVectorBounds *bounds;
         ob::SpaceInformationPtr si;
         ob::ProblemDefinitionPtr pdef;
+        tf::TransformListener tfl;
 
         ros::Subscriber goal_sub;
         ros::Subscriber odom_sub;
         ros::Publisher path_pub;
         PoseStampedPtr goal_pose;
-        OdomPtr start_pose;
+        PoseStampedPtr start_pose;
+        vector<string> tag_ids;
 
 
         ~QuadPlanner();
         QuadPlanner(ros::NodeHandle *nh);
         void start();
         void goal_cb(const PoseStampedPtr& ps);
-        void odom_cb(const OdomPtr& odom);
+        void odom_cb(const PoseStampedPtr& ps);
+        bool get_trans_to_quad(string, tf::StampedTransform);
         ob::PlannerStatus plan(
-                const OdomPtr& odom,
+                const PoseStampedPtr& odom,
                 const PoseStampedPtr& pose,
                 nav_msgs::Path& path_plan);
 };

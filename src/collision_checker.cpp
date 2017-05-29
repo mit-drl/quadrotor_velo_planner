@@ -21,14 +21,7 @@ CollisionChecker::CollisionChecker(
 
 bool CollisionChecker::isValid(const ob::State *state) const
 {
-    double x = state->as<ob::SE3StateSpace::StateType>()->getX();
-    double y = state->as<ob::SE3StateSpace::StateType>()->getY();
-    double z = state->as<ob::SE3StateSpace::StateType>()->getZ();
-    return is_point_valid(x, y, z);
-}
-
-bool CollisionChecker::is_point_valid(double x0, double y0, double z0) const
-{
+    auto state_values = state->as<ob::SE3StateSpace::StateType>();
     return true;
 }
 
@@ -36,4 +29,9 @@ void CollisionChecker::cloud_cb(const PointCloud2Ptr msg)
 {
     cloud = msg;
     clustering.get_euclidean_clusters(msg, clusters);
+}
+
+void CollisionChecker::set_tags(vector<tf::StampedTransform> tags)
+{
+    this->tags = tags;
 }
